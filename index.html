@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EKS - Pro Electrical Installation Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Activation Screen -->
+    <div id="activationScreen" class="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
+            <h1 class="text-3xl font-bold text-blue-700 mb-2">EKS Original</h1>
+            <p class="text-gray-500 mb-6 text-sm">Professional Electrical Planner - PRO Version</p>
+            
+            <div class="bg-gray-100 p-4 rounded-lg mb-6 border border-gray-300">
+                <p class="text-sm text-gray-600 mb-1">Your Device ID</p>
+                <p id="displayDeviceId" class="text-3xl font-mono font-bold text-gray-800 tracking-widest"></p>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-left text-sm font-bold text-gray-700 mb-2">Enter Activation Key</label>
+                <input type="number" id="activationKey" class="w-full p-3 border-2 border-blue-400 rounded-lg text-center text-xl font-bold tracking-widest focus:outline-none focus:ring-4 focus:ring-blue-200" placeholder="------">
+            </div>
+            
+            <button onclick="verifyKey()" class="w-full bg-blue-700 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-800 transition-colors shadow-lg">Activate App</button>
+            <p class="text-xs text-gray-400 mt-4">Please contact EKS Original admin to purchase your activation key.</p>
+        </div>
+    </div>
+
+    <!-- Main Application Container -->
+    <div id="appContent" class="max-w-6xl mx-auto p-4 sm:p-6 mt-6 bg-white shadow-xl rounded-2xl hidden fade-in mb-10">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-blue-700">EKS PRO Planner</h1>
+                <p class="text-gray-500 text-sm">Load, Cable, Lighting & Safety Calculation Tool</p>
+            </div>
+            <button onclick="logoutApp()" class="text-sm text-red-500 hover:underline">Deactivate</button>
+        </div>
+
+        <form id="calcForm" class="space-y-6">
+            
+            <!-- 1. Project Info -->
+            <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4 text-blue-800 border-b pb-2">1. Project & Site Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="md:col-span-1">
+                        <label class="block text-sm font-bold mb-1">Project Name</label>
+                        <input type="text" id="projectName" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400" placeholder="e.g. Myola Residence" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">Site Type</label>
+                        <select id="siteType" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400">
+                            <option value="Residential">Residential</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Industrial">Industrial</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">System Voltage</label>
+                        <select id="voltage" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400">
+                            <option value="230">Single Phase (230V)</option>
+                            <option value="400">Three Phase (400V)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">Location</label>
+                        <select id="location" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-400">
+                            <option value="Yangon">Yangon</option>
+                            <option value="Mandalay">Mandalay</option>
+                            <option value="Naypyidaw">Naypyidaw</option>
+                            <option value="ShanState">Shan State / Hilly</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Environment -->
+            <div class="bg-orange-50 p-5 rounded-xl border border-orange-100 shadow-sm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-orange-800 mb-1">Ambient Temperature (°C)</label>
+                        <input type="number" id="temp" class="w-full p-2 border rounded focus:ring-2 focus:ring-orange-400" value="35" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-orange-800 mb-1">Cable Installation Method</label>
+                        <select id="installMethod" class="w-full p-2 border rounded focus:ring-2 focus:ring-orange-400">
+                            <option value="Concealed">Concealed (In Wall/PVC Conduit)</option>
+                            <option value="Exposed">Exposed (Tray/Ladder/Clipped)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Room Lighting Estimator -->
+            <div class="bg-yellow-50 p-5 rounded-xl border border-yellow-200 shadow-sm">
+                <div class="flex justify-between items-center mb-4 border-b border-yellow-300 pb-2">
+                    <h2 class="text-xl font-semibold text-yellow-800">3. Room Lighting Estimator (Lux Calculation)</h2>
+                    <button type="button" onclick="addRoom()" class="bg-yellow-600 text-white px-3 py-1.5 rounded shadow hover:bg-yellow-700 text-sm font-bold">+ Add Room</button>
+                </div>
+                <div id="roomsContainer" class="space-y-3"></div>
+            </div>
+
+            <!-- 4. Circuits Section -->
+            <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
+                    <h2 class="text-xl font-semibold text-gray-800">4. Circuit Load Schedules</h2>
+                    <button type="button" onclick="addCircuit()" class="bg-green-600 text-white px-3 py-1.5 rounded shadow hover:bg-green-700 text-sm font-bold">+ Add Circuit</button>
+                </div>
+                <div id="circuitsContainer" class="space-y-4"></div>
+            </div>
+
+            <!-- 5. Backup Systems -->
+            <div class="bg-teal-50 p-5 rounded-xl border border-teal-100 shadow-sm">
+                <h2 class="text-xl font-semibold mb-4 text-teal-800 border-b pb-2">5. Backup Systems (Optional)</h2>
+                <div class="flex space-x-6 font-bold text-teal-900">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="hasGenerator" class="w-5 h-5 text-teal-600"><span>Generator Backup</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="hasSolar" class="w-5 h-5 text-teal-600"><span>Solar PV System</span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="button" onclick="calculateResults()" class="w-full bg-blue-700 text-white py-4 rounded-xl shadow-lg text-xl font-bold hover:bg-blue-800 transition-all uppercase tracking-wide">Generate Calculation Report</button>
+        </form>
+
+        <!-- Results Display -->
+        <div id="resultSection" class="mt-10 hidden fade-in border-t-4 border-blue-700 pt-8">
+            <h2 class="text-3xl font-black text-center text-gray-800 mb-8 uppercase tracking-widest">Engineering Report</h2>
+            <div id="output" class="space-y-6"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- Activation Logic ---
+        function checkActivation() {
+            let activated = localStorage.getItem('eks_pro_activated');
+            if (activated === 'true') {
+                document.getElementById('appContent').classList.remove('hidden');
+                document.getElementById('activationScreen').classList.add('hidden');
+            } else {
+                let deviceId = localStorage.getItem('eks_device_id');
+                if (!deviceId) {
+                    deviceId = Math.floor(100000 + Math.random() * 900000); // 6 digits
+                    localStorage.setItem('eks_device_id', deviceId);
+                }
+                document.getElementById('displayDeviceId').innerText = deviceId;
+            }
+        }
+
+        function verifyKey() {
+            let deviceId = parseInt(localStorage.getItem('eks_device_id'));
+            let enteredKey = parseInt(document.getElementById('activationKey').value);
+            // Secret Formula: (Device ID * 7) + 8421
+            let correctKey = (deviceId * 7) + 8421; 
+            
+            if (enteredKey === correctKey) {
+                localStorage.setItem('eks_pro_activated', 'true');
+                alert("Activation Successful! Welcome to EKS PRO Planner.");
+                location.reload();
+            } else {
+                alert("Invalid Activation Key. Please check with EKS Original admin.");
+            }
+        }
+
+        function logoutApp() {
+            localStorage.removeItem('eks_pro_activated');
+            location.reload();
+        }
+
+        window.onload = () => { 
+            checkActivation(); 
+            addCircuit(); 
+            addRoom();
+        };
+
+        // --- Room Lighting Logic ---
+        let roomCount = 0;
+        function addRoom() {
+            roomCount++;
+            const div = document.createElement('div');
+            div.className = "room-row grid grid-cols-1 md:grid-cols-12 gap-3 bg-white p-3 border rounded shadow-sm items-center fade-in";
+            div.id = `room-${roomCount}`;
+            div.innerHTML = `
+                <div class="md:col-span-4">
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Room Name</label>
+                    <input type="text" id="rName-${roomCount}" class="w-full p-2 border rounded text-sm" placeholder="e.g. Living Room">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Length (m)</label>
+                    <input type="number" id="rL-${roomCount}" class="w-full p-2 border rounded text-sm" placeholder="5">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Width (m)</label>
+                    <input type="number" id="rW-${roomCount}" class="w-full p-2 border rounded text-sm" placeholder="4">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Height (m)</label>
+                    <input type="number" id="rH-${roomCount}" class="w-full p-2 border rounded text-sm" placeholder="3" value="3">
+                </div>
+                <div class="md:col-span-2 text-right">
+                    <button type="button" onclick="removeRoom(${roomCount})" class="text-red-500 hover:text-red-700 font-bold px-2 py-1 bg-red-100 rounded">Remove</button>
+                </div>
+            `;
+            document.getElementById('roomsContainer').appendChild(div);
+        }
+        function removeRoom(id) { document.getElementById(`room-${id}`).remove(); }
+
+        // --- Circuit Logic ---
+        let circuitCount = 0;
+        function addCircuit() {
+            circuitCount++;
+            const div = document.createElement('div');
+            div.className = "circuit-row grid grid-cols-1 md:grid-cols-12 gap-3 bg-white p-4 border rounded shadow-sm items-center fade-in";
+            div.id = `circuit-${circuitCount}`;
+            div.innerHTML = `
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Circuit Name</label>
+                    <input type="text" id="cName-${circuitCount}" class="w-full p-2 border rounded text-sm" placeholder="Master Bed AC" required>
+                </div>
+                <div class="md:col-span-4 border-l pl-2">
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Loads (Select)</label>
+                    <div class="flex flex-wrap gap-2 text-xs font-bold">
+                        <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" id="cLight-${circuitCount}" value="Lighting"><span>Light</span></label>
+                        <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" id="cSocket-${circuitCount}" value="Socket"><span>Socket</span></label>
+                        <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" id="cAC-${circuitCount}" value="AC"><span>AC</span></label>
+                        <label class="flex items-center space-x-1 cursor-pointer"><input type="checkbox" id="cWH-${circuitCount}" value="Heater"><span>Heater</span></label>
+                    </div>
+                </div>
+                <div class="md:col-span-2 border-l pl-2">
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Total Watt (W)</label>
+                    <input type="number" id="cWatt-${circuitCount}" class="w-full p-2 border rounded text-sm" placeholder="1500" required>
+                </div>
+                <div class="md:col-span-1 border-l pl-2">
+                    <label class="block text-xs font-bold text-gray-600 mb-1">PF</label>
+                    <input type="number" id="cPF-${circuitCount}" class="w-full p-2 border rounded text-sm" value="0.85" step="0.01">
+                </div>
+                <div class="md:col-span-2 border-l pl-2 bg-blue-50 rounded p-1">
+                    <label class="block text-xs font-bold text-blue-800 mb-1">Demand Factor %</label>
+                    <input type="number" id="cDF-${circuitCount}" class="w-full p-2 border border-blue-300 rounded text-sm" value="100" max="100" min="10">
+                </div>
+                <div class="md:col-span-1 text-right">
+                    <button type="button" onclick="removeCircuit(${circuitCount})" class="text-red-500 font-bold bg-red-100 px-2 py-1 rounded">X</button>
+                </div>
+            `;
+            document.getElementById('circuitsContainer').appendChild(div);
+        }
+        function removeCircuit(id) { document.getElementById(`circuit-${id}`).remove(); }
+
+        // --- Core Engineering Calculations ---
+        function getBreakerSize(current) {
+            const sizes = [6, 10, 16, 20, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 320, 400];
+            for (let s of sizes) { if (s >= current) return s; }
+            return Math.ceil(current);
+        }
+
+        function getCableSize(breaker, temp, method) {
+            const cables = [
+                {size: "1.5", amp: 15}, {size: "2.5", amp: 21}, {size: "4.0", amp: 28},
+                {size: "6.0", amp: 36}, {size: "10.0", amp: 50}, {size: "16.0", amp: 68},
+                {size: "25.0", amp: 89}, {size: "35.0", amp: 110}, {size: "50.0", amp: 134},
+                {size: "70.0", amp: 171}, {size: "95.0", amp: 207}, {size: "120.0", amp: 239}
+            ];
+            let tempFactor = temp > 40 ? 0.8 : (temp > 30 ? 0.9 : 1.0);
+            let methodFactor = method === "Concealed" ? 0.8 : 1.0; 
+            for (let c of cables) {
+                if ((c.amp * tempFactor * methodFactor) >= breaker) return c.size;
+            }
+            return "> 120.0";
+        }
+
+        function getBreakingCapacity(type, isMain, current) {
+            if (type === "Residential") return isMain ? (current > 63 ? "10kA" : "6kA / 10kA") : "6kA";
+            if (type === "Commercial") return isMain ? (current > 100 ? "25kA / 36kA" : "10kA / 16kA") : "10kA";
+            if (type === "Industrial") return isMain ? (current > 160 ? "36kA / 50kA" : "25kA / 36kA") : "10kA / 16kA";
+            return "10kA";
+        }
+
+        // --- Main Generation ---
+        function calculateResults() {
+            const sysVolts = parseInt(document.getElementById('voltage').value);
+            const is3Phase = sysVolts === 400;
+            const temp = parseFloat(document.getElementById('temp').value);
+            const method = document.getElementById('installMethod').value;
+            const location = document.getElementById('location').value;
+            const siteType = document.getElementById('siteType').value;
+            
+            let html = '';
+            let totalMaxDemandCurrent = 0;
+            let safetyWarnings = [];
+
+            // --- 1. Lighting Calculation ---
+            const roomRows = document.querySelectorAll('.room-row');
+            if (roomRows.length > 0) {
+                let luxReq = siteType === "Residential" ? 150 : (siteType === "Commercial" ? 350 : 500);
+                
+                let lightHtml = `<div class="bg-white p-4 rounded-xl shadow border"><h3 class="text-xl font-bold text-yellow-600 mb-3 border-b pb-2">Room Lighting (Estimation)</h3>
+                <div class="overflow-x-auto"><table class="w-full text-sm text-left border"><thead class="bg-yellow-50"><tr>
+                    <th class="p-2 border">Room</th><th class="p-2 border">Area (m²)</th><th class="p-2 border">Target Lux</th><th class="p-2 border">Required Lumens (Approx)</th>
+                </tr></thead><tbody>`;
+
+                roomRows.forEach(row => {
+                    const id = row.id.split('-')[1];
+                    const name = document.getElementById(`rName-${id}`).value || `Room ${id}`;
+                    const l = parseFloat(document.getElementById(`rL-${id}`).value) || 0;
+                    const w = parseFloat(document.getElementById(`rW-${id}`).value) || 0;
+                    
+                    if (l > 0 && w > 0) {
+                        let area = l * w;
+                        let lumens = area * luxReq;
+                        lightHtml += `<tr>
+                            <td class="p-2 border font-bold">${name}</td><td class="p-2 border">${area.toFixed(2)} m²</td>
+                            <td class="p-2 border text-yellow-700 font-bold">${luxReq} Lux</td><td class="p-2 border">${lumens.toFixed(0)} lm</td>
+                        </tr>`;
+                    }
+                });
+                lightHtml += `</tbody></table></div></div>`;
+                html += lightHtml;
+            }
+
+            // --- 2. Circuits Calculation ---
+            let circuitResults = `<div class="bg-white p-4 rounded-xl shadow border mt-4"><h3 class="text-xl font-bold text-gray-800 mb-3 border-b pb-2">Circuit Schedules</h3>
+            <div class="overflow-x-auto"><table class="w-full text-sm text-center border"><thead class="bg-gray-100 text-gray-700"><tr>
+                <th class="p-2 border">Circuit</th><th class="p-2 border">Load Current</th><th class="p-2 border bg-blue-50">Demand %</th>
+                <th class="p-2 border bg-blue-50">Max Demand</th><th class="p-2 border">Breaker (Amp/kA)</th><th class="p-2 border">Cable mm²</th>
+            </tr></thead><tbody>`;
+
+            const circuitRows = document.querySelectorAll('.circuit-row');
+            if(circuitRows.length === 0) { alert("Please add at least one circuit."); return; }
+
+            circuitRows.forEach(row => {
+                const id = row.id.split('-')[1];
+                const name = document.getElementById(`cName-${id}`).value || `Circuit ${id}`;
+                const watt = parseFloat(document.getElementById(`cWatt-${id}`).value) || 0;
+                const pf = parseFloat(document.getElementById(`cPF-${id}`).value) || 0.85;
+                const df = parseFloat(document.getElementById(`cDF-${id}`).value) || 100;
+
+                let hasLight = document.getElementById(`cLight-${id}`).checked;
+                let hasSocket = document.getElementById(`cSocket-${id}`).checked;
+                let hasAC = document.getElementById(`cAC-${id}`).checked;
+                let hasWH = document.getElementById(`cWH-${id}`).checked;
+
+                // Warnings
+                let types = [hasLight, hasSocket, hasAC, hasWH].filter(Boolean).length;
+                if(types > 1) {
+                    if(hasLight && (hasSocket || hasAC || hasWH)) safetyWarnings.push(`<b>[${name}]</b>: မီးလိုင်း (Lighting) ကို Socket သို့မဟုတ် Heavy load တွေနဲ့ မရောသင့်ပါ။`);
+                    if(hasAC && (hasLight || hasSocket || hasWH)) safetyWarnings.push(`<b>[${name}]</b>: Air Con ကို Dedicated သီးသန့်လိုင်း ဆွဲသင့်ပါသည်။`);
+                }
+
+                // Currents
+                let loadCurrent = watt / (230 * pf); 
+                let maxDemand = loadCurrent * (df / 100);
+                totalMaxDemandCurrent += maxDemand;
+
+                let breaker = getBreakerSize(loadCurrent);
+                let branchKA = getBreakingCapacity(siteType, false, breaker);
+                let cable = getCableSize(breaker, temp, method);
+                let bType = (hasAC || hasWH) ? "Type C" : "Type B";
+
+                circuitResults += `<tr>
+                    <td class="p-2 border font-bold text-left">${name}</td>
+                    <td class="p-2 border">${loadCurrent.toFixed(2)} A</td>
+                    <td class="p-2 border bg-blue-50 font-bold">${df}%</td>
+                    <td class="p-2 border bg-blue-50 text-blue-700 font-bold">${maxDemand.toFixed(2)} A</td>
+                    <td class="p-2 border font-bold text-gray-800">${breaker}A (${bType}) <br><span class="text-xs text-purple-600">${branchKA}</span></td>
+                    <td class="p-2 border font-black text-green-700">${cable}</td>
+                </tr>`;
+            });
+            circuitResults += `</tbody></table></div></div>`;
+            html += circuitResults;
+
+            // --- 3. Main DB & Cable Management ---
+            let mainCurrent = is3Phase ? (totalMaxDemandCurrent / 3) : totalMaxDemandCurrent;
+            let mainBreaker = getBreakerSize(mainCurrent);
+            let mainBreakerType = mainBreaker > 63 ? "MCCB" : "MCB";
+            let mainKA = getBreakingCapacity(siteType, true, mainBreaker);
+            let mainCable = getCableSize(mainBreaker, temp, method); // Calculated Main Cable
+
+            // RCD & Management Logic
+            let rcdMain = "", rcdBranch = "", cableMgmt = "";
+            if(siteType === "Residential") {
+                rcdMain = "100mA / 300mA (Optional for Fire Protection)"; rcdBranch = "30mA (Mandatory for Sockets/Heaters)";
+                cableMgmt = "Concealed PVC Conduit, Mini PVC Trunking";
+            } else if(siteType === "Commercial") {
+                rcdMain = "300mA Time-Delayed (Prevent Nuisance Tripping)"; rcdBranch = "30mA (Sockets and Wet Areas)";
+                cableMgmt = "PVC/GI Conduit (Branch), Cable Tray / Metal Trunking (Main Routes)";
+            } else {
+                rcdMain = "300mA - 500mA Adjustable (Earth Leakage Relay)"; rcdBranch = "30mA for General Endpoints";
+                cableMgmt = "Heavy Duty GI Conduit, Cable Tray, Cable Ladder (Main Feeders)";
+            }
+
+            html += `<div class="bg-blue-600 text-white p-6 rounded-xl shadow-lg mt-4 relative overflow-hidden">
+                <div class="absolute top-0 right-0 opacity-10 text-9xl">⚡</div>
+                <h3 class="text-2xl font-black mb-4">Main DB & Containment Recommendation</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                    <div class="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+                        <p class="text-blue-200 mb-1">Total System Max Demand</p>
+                        <p class="text-3xl font-bold mb-4">${totalMaxDemandCurrent.toFixed(2)} A <span class="text-sm font-normal">(${is3Phase?'3-Phase':'1-Phase'})</span></p>
+                        
+                        <p class="text-blue-200 mb-1">Recommended Main Breaker</p>
+                        <p class="text-2xl font-bold text-yellow-300">${mainBreaker}A ${mainBreakerType} <span class="text-lg">(${is3Phase?'3P/4P':'2P'})</span></p>
+                        <p class="text-sm">Breaking Capacity: <b>${mainKA}</b></p>
+                    </div>
+                    
+                    <div class="bg-white text-gray-800 p-4 rounded-lg shadow-inner">
+                        <p class="text-gray-500 font-bold text-sm uppercase">Main Incoming Cable Size</p>
+                        <p class="text-4xl font-black text-green-600 mb-4">${mainCable} mm²</p>
+                        
+                        <p class="text-xs font-bold text-gray-500 uppercase mt-2">RCD / RCCB (IΔn) Setup</p>
+                        <p class="text-sm border-l-4 border-red-500 pl-2 mt-1"><b>Main:</b> ${rcdMain}</p>
+                        <p class="text-sm border-l-4 border-red-500 pl-2 mt-1"><b>Branch:</b> ${rcdBranch}</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 bg-blue-800 p-3 rounded-lg border border-blue-500 text-sm">
+                    <b>Recommended Cable Management:</b> ${cableMgmt}
+                </div>
+            </div>`;
+
+            // --- 4. Earthing & Soil Conditions ---
+            let soilDesc = "", earthAdvice = "";
+            if(location === "Yangon") { soilDesc = "10-50 Ω.m | Soft / Alluvial Soil (မြေပျော့ / နုန်းမြေ)"; earthAdvice = "Standard copper rods (1.5m - 2.5m) should achieve < 5Ω easily."; }
+            else if(location === "Mandalay") { soilDesc = "50-150 Ω.m | Dry / Sandy / Medium Hard (မြေခြောက် / သဲဆန်မြေ)"; earthAdvice = "May require multiple rods driven deeper, or GEM compound."; }
+            else if(location === "Naypyidaw") { soilDesc = "50-100 Ω.m | Mixed / Medium Hard (အလယ်အလတ်မြေမာ)"; earthAdvice = "Test required, prepare for potential multiple rod config."; }
+            else if(location === "ShanState") { soilDesc = "100-500+ Ω.m | Hard / Rocky Soil (မြေမာ / ကျောက်ဆောင်မြေ)"; earthAdvice = "Conventional rods may fail. Consider trench earthing or chemical pits."; }
+            else { soilDesc = "Varies"; earthAdvice = "Conduct a 4-point soil resistivity test on site."; }
+
+            html += `<div class="bg-gray-800 text-white p-5 rounded-xl shadow mt-4">
+                <h3 class="text-lg font-bold text-yellow-400 mb-2">Earthing (Grounding) Recommendation</h3>
+                <p><b>Location:</b> ${location} &mdash; <span class="text-green-300 font-bold">${soilDesc}</span></p>
+                <p class="text-sm mt-2 text-gray-300 bg-gray-700 p-2 rounded border border-gray-600">${earthAdvice}</p>
+            </div>`;
+
+            // --- 5. Safety Alerts ---
+            if(safetyWarnings.length > 0) {
+                let wHtml = `<div class="bg-red-50 p-5 rounded-xl shadow border border-red-200 mt-4"><h3 class="text-lg font-bold text-red-700 mb-2">⚠️ Safety Alerts Detected</h3><ul class="list-disc ml-5 text-red-700 text-sm space-y-1">`;
+                safetyWarnings.forEach(w => wHtml += `<li>${w}</li>`);
+                wHtml += `</ul></div>`;
+                html += wHtml;
+            }
+
+            // --- 6. Backup Systems ---
+            if(document.getElementById('hasGenerator').checked || document.getElementById('hasSolar').checked) {
+                let bHtml = `<div class="bg-green-50 p-5 rounded-xl shadow border border-green-200 mt-4"><h3 class="text-lg font-bold text-green-800 mb-2">Backup System Integration</h3><ul class="list-disc ml-5 text-sm space-y-2 text-green-900">`;
+                if(document.getElementById('hasGenerator').checked) bHtml += `<li><b>Generator:</b> Use an ATS/MTS Changeover Switch. Do not back-feed to the grid.</li>`;
+                if(document.getElementById('hasSolar').checked) bHtml += `<li><b>Solar PV:</b> Use dedicated DC Breakers & DC SPD. Heavy surge loads must be isolated from standard Hybrid Inverters.</li>`;
+                bHtml += `</ul></div>`;
+                html += bHtml;
+            }
+
+            document.getElementById('output').innerHTML = html;
+            document.getElementById('resultSection').classList.remove('hidden');
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
