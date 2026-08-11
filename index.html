@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EKS - Pro Electrical Installation Planner</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- PDF Generation Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; }
@@ -139,13 +138,24 @@
             <!-- 5. Backup Systems -->
             <div class="bg-teal-50 p-5 rounded-xl border border-teal-100 shadow-sm">
                 <h2 class="text-xl font-semibold mb-4 text-teal-800 border-b pb-2">5. Backup Systems (Optional)</h2>
-                <div class="flex space-x-6 font-bold text-teal-900">
+                <div class="flex flex-col md:flex-row md:space-x-10 space-y-4 md:space-y-0 font-bold text-teal-900">
                     <label class="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" id="hasGenerator" class="w-5 h-5 text-teal-600"><span>Generator + ATS</span>
                     </label>
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="hasSolar" class="w-5 h-5 text-teal-600"><span>Solar PV System</span>
-                    </label>
+                    
+                    <div class="flex items-center space-x-4 border-l-0 md:border-l-2 md:pl-6 border-teal-200">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" id="hasSolar" class="w-5 h-5 text-teal-600"><span>Solar PV System</span>
+                        </label>
+                        <select id="solarPanelWatt" class="p-1 border border-teal-300 rounded text-sm text-teal-800 focus:ring-2 focus:ring-teal-400">
+                            <option value="450">450W Panels</option>
+                            <option value="500">500W Panels</option>
+                            <option value="540">540W Panels</option>
+                            <option value="550" selected>550W Panels</option>
+                            <option value="580">580W Panels</option>
+                            <option value="600">600W Panels</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -327,7 +337,6 @@
         }
 
         // --- Standard IEC Minimum Checkers (CORRECTED BASE AMPS) ---
-        // Accurate BS 7671 Base Amps (Method C - Clipped Direct) for PVC 70°C Copper
         const cableSizes = ["1.5", "2.5", "4.0", "6.0", "10.0", "16.0", "25.0", "35.0", "50.0", "70.0", "95.0", "120.0"];
         const cableAmps = [19, 27, 36, 46, 63, 85, 112, 138, 168, 213, 258, 299]; 
         const breakerSizes = [6, 10, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 320, 400, 500, 630];
@@ -338,14 +347,12 @@
         }
 
         function getCable(breaker, temp, method, minReqSize) {
-            // Updated Accurate Derating Factors (BS7671 PVC Table 4B1)
             let tempFactor = temp > 40 ? 0.87 : (temp > 30 ? 0.94 : 1.0); 
             let methodFactor = method === "Concealed" ? 0.8 : 1.0; 
             
             let calcSize = "> 120.0";
             let calcIndex = -1;
             for (let i = 0; i < cableAmps.length; i++) {
-                // Effective current capacity after derating
                 if ((cableAmps[i] * tempFactor * methodFactor) >= breaker) {
                     calcSize = cableSizes[i];
                     calcIndex = i;
@@ -441,10 +448,10 @@
                 if(hasPump) activeLoads.push("Pump");
                 if(hasOther && customName) activeLoads.push(customName);
 
-                // FIXED IEC Minimum Restrictions
+                // FIXED IEC Minimum Restrictions (Updated AC to 4.0mm²)
                 let minMCB = 10; let minCab = "1.5";
                 if(hasSocket) { minMCB = 16; minCab = "2.5"; }
-                if(hasAC) { minMCB = Math.max(minMCB, 16); minCab = (minCab === "4.0" || minCab === "6.0") ? minCab : "2.5"; }
+                if(hasAC) { minMCB = Math.max(minMCB, 16); minCab = (minCab === "6.0" || minCab === "10.0") ? minCab : "4.0"; }
                 if(hasWH || hasPump) { minMCB = Math.max(minMCB, 16); minCab = (minCab === "4.0" || minCab === "6.0") ? minCab : "2.5"; }
 
                 if(activeLoads.length > 1) {
@@ -479,7 +486,7 @@
             let mainBreaker = getBreaker(mainCurrent, 32); 
             let mainBreakerType = mainBreaker > 63 ? "MCCB" : "MCB";
             let mainKA = getBreakingCapacity(siteType, true, mainBreaker);
-            let mainCable = getCable(mainBreaker, temp, method, "6.0"); // Min 6mm for Main
+            let mainCable = getCable(mainBreaker, temp, method, "6.0"); 
 
             let rcdMain = `${mainBreaker}A / 100mA (or) 300mA`; 
             let rcdBranch = `Up to 63A / 30mA`;
@@ -563,14 +570,15 @@
                     const invSizes = [3, 5, 8, 10, 12, 15, 20, 30, 50];
                     let selectedInv = invSizes.find(s => s >= invKW) || Math.ceil(invKW);
                     
+                    let panelWatt = parseInt(document.getElementById('solarPanelWatt').value) || 550;
                     let battKWh = maxDemandKW * 2; 
-                    let panelsQty = Math.ceil((selectedInv * 1000) / 550); 
+                    let panelsQty = Math.ceil((selectedInv * 1000) / panelWatt); 
                     
                     bHtml += `<div class="bg-white p-3 rounded shadow-sm border-l-4 border-yellow-500">
                         <p class="font-bold text-yellow-600 mb-2">Solar PV System Setup</p>
                         <p class="text-sm">Inverter Capacity: <b class="text-blue-700 text-lg">${selectedInv} kW</b></p>
                         <p class="text-sm">Est. Battery (2 Hrs): <b class="text-green-600">${battKWh.toFixed(1)} kWh</b></p>
-                        <p class="text-sm mt-1">Solar Panels (550W): <b class="text-gray-800">${panelsQty} Nos</b> (Min)</p>
+                        <p class="text-sm mt-1">Solar Panels (${panelWatt}W): <b class="text-gray-800">${panelsQty} Nos</b> (Min)</p>
                     </div>`;
                 }
                 bHtml += `</div></div>`;
@@ -592,7 +600,6 @@
 
         // --- PDF Generation Logic ---
         function downloadPDF() {
-            // Show print header for PDF
             document.querySelector('.print-header').classList.remove('hidden');
             
             const element = document.getElementById('resultSection');
@@ -605,7 +612,6 @@
                 pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
             };
 
-            // Generate PDF and then hide print header again
             html2pdf().set(opt).from(element).save().then(() => {
                 document.querySelector('.print-header').classList.add('hidden');
             });
